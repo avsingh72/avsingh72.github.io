@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anand V. Singh | AI & ML Engineer</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cyan: #00F0FF;
+            --cyan-glow: rgba(0, 240, 255, 0.4);
+            --bg-color: #030508;
+            --text-main: #FFFFFF;
+            --text-muted: #A0AEC0;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(0, 240, 255, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            cursor: none; /* Custom Cursor */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Space Grotesk', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 3D Canvas Background */
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: -1;
+        }
+
+        /* Top Navigation */
+        nav {
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding: 30px 20px;
+            background: linear-gradient(to bottom, rgba(3,5,8,0.9) 0%, transparent 100%);
+            z-index: 10;
+        }
+
+        .tab-btn {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 18px;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .tab-btn:hover { 
+            color: var(--text-main); 
+            border-color: rgba(0, 240, 255, 0.4);
+        }
+        
+        .tab-btn.active { 
+            background: var(--cyan);
+            color: #030508;
+            border-color: var(--cyan);
+            font-weight: 700;
+            box-shadow: 0 0 15px var(--cyan-glow);
+        }
+
+        /* Main Content Container */
+        main {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 900px;
+            z-index: 5;
+            overflow: hidden;
+        }
+
+        .page-container {
+            display: flex;
+            width: 500%; /* 5 pages total */
+            transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .page {
+            background: rgba(10, 15, 25, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 240, 255, 0.18);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            width: 20%; /* 1/5 per section */
+            flex-shrink: 0;
+            opacity: 0.3;
+            transform: scale(0.96);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+
+        .page::-webkit-scrollbar {
+            width: 5px;
+        }
+        .page::-webkit-scrollbar-thumb {
+            background: rgba(0, 240, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .page.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.8rem;
+            line-height: 1.1;
+            margin-bottom: 12px;
+            font-weight: 700;
+            min-height: 3.1rem;
+        }
+        
+        .role {
+            color: var(--cyan);
+            font-size: 1rem;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+        }
+
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            color: var(--cyan);
+            margin-bottom: 24px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        /* Skills Grid */
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .skill-tag {
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            color: var(--text-main);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .skill-tag:hover {
+            background: rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 15px var(--cyan-glow);
+            transform: translateY(-2px);
+        }
+
+        /* Certifications Grid */
+        .certs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .cert-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .cert-card:hover {
+            border-color: var(--cyan);
+            box-shadow: 0 0 18px rgba(0, 240, 255, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .cert-org {
+            font-size: 0.75rem;
+            color: var(--cyan);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .cert-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .cert-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Connect Links */
+        .connect-links {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .connect-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            transition: color 0.3s;
+        }
+
+        .connect-links a span {
+            color: var(--text-muted);
+            width: 120px;
+            font-size: 0.95rem;
+        }
+
+        .connect-links a:hover {
+            color: var(--cyan);
+        }
+
+        /* Custom AI Cursor */
+        .cursor-ring {
+            position: fixed; width: 36px; height: 36px;
+            border: 1px solid var(--cyan); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none; z-index: 9999;
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+        .cursor-dot {
+            position: fixed; width: 6px; height: 6px;
+            background: var(--text-main); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none; z-index: 10000;
+        }
+
+        @media (max-width: 768px) {
+            nav { gap: 10px; padding: 15px 10px; flex-wrap: wrap; }
+            .tab-btn { font-size: 12px; padding: 6px 12px; }
+            .page { padding: 25px; }
+            h1 { font-size: 2rem; min-height: 2.2rem; }
+            .connect-links a { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .certs-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="cursor-ring" id="cursor-ring"></div>
+    <div class="cursor-dot" id="cursor-dot"></div>
+
+    <nav>
+        <button class="tab-btn active" onclick="switchTab(0, 'home', this)">Home</button>
+        <button class="tab-btn" onclick="switchTab(1, 'skills', this)">Skills</button>
+        <button class="tab-btn" onclick="switchTab(2, 'projects', this)">Projects</button>
+        <button class="tab-btn" onclick="switchTab(3, 'certifications', this)">Certifications</button>
+        <button class="tab-btn" onclick="switchTab(4, 'connect', this)">Connect</button>
+    </nav>
+
+    <main>
+        <div class="page-container" id="page-container">
+            <div id="home" class="page active">
+                <div class="section-label">01 / Introduction</div>
+                <h1 id="typed-name"></h1>
+                <div class="role">B.Tech CSE (AI & ML) | Lovely Professional University [2025-2029]</div>
+                <p>I am an aspiring Artificial Intelligence and Machine Learning Engineer. I am passionate about building intelligent systems, analyzing complex data structures, and continuously upgrading my technical skill set to solve real-world problems.</p>
+            </div>
+
+            <div id="skills" class="page">
+                <div class="section-label">02 / Technical Arsenal</div>
+                <p>Languages and technologies I currently work with:</p>
+                <div class="skills-grid">
+                    <div class="skill-tag">C</div>
+                    <div class="skill-tag">C++</div>
+                    <div class="skill-tag">Python</div>
+                    <div class="skill-tag">Java</div>
+                    <div class="skill-tag">DSA</div>
+                    <div class="skill-tag">SQL</div>
+                    <div class="skill-tag">HTML</div>
+                    <div class="skill-tag">CSS</div>
+                    <div class="skill-tag">JavaScript</div>
+                </div>
+            </div>
+
+            <div id="projects" class="page">
+                <div class="section-label">03 / Work & Research</div>
+                <p><i>Project repositories and AI models are currently being structured. Check back soon for my latest web applications and machine learning implementations.</i></p>
+            </div>
+
+            <div id="certifications" class="page">
+                <div class="section-label">04 / Verified Credentials</div>
+                <div class="certs-grid">
+                    <div class="cert-card">
+                        <div>
+                            <div class="cert-org">neo colab / LPU</div>
+                            <div class="cert-title">Computer Programming</div>
+                        </div>
+                        <div class="cert-meta">
+                            <span>150 Hours</span>
+                            <span>May 2026</span>
+                        </div>
+                    </div>
+
+                    <div class="cert-card">
+                        <div>
+                            <div class="cert-org">Infosys Springboard</div>
+                            <div class="cert-title">Time Management</div>
+                        </div>
+                        <div class="cert-meta">
+                            <span>Professional Skill</span>
+                            <span>Oct 2025</span>
+                        </div>
+                    </div>
+
+                    <div class="cert-card">
+                        <div>
+                            <div class="cert-org">Saylor Academy</div>
+                            <div class="cert-title">PRDV224: Leadership and Teams</div>
+                        </div>
+                        <div class="cert-meta">
+                            <span>ID: 7890943190AS</span>
+                            <span>Oct 2025</span>
+                        </div>
+                    </div>
+
+                    <div class="cert-card">
+                        <div>
+                            <div class="cert-org">Apna College</div>
+                            <div class="cert-title">DSA with Java</div>
+                        </div>
+                        <div class="cert-meta">
+                            <span>Core Engineering</span>
+                            <span>Completed</span>
+                        </div>
+                    </div>
+
+                    <div class="cert-card">
+                        <div>
+                            <div class="cert-org">Reliance Foundation & Skill India</div>
+                            <div class="cert-title">AI-Machine Learning Engineer Foundation</div>
+                        </div>
+                        <div class="cert-meta">
+                            <span>120 Hours</span>
+                            <span>Feb 2026</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="connect" class="page">
+                <div class="section-label">05 / Connect</div>
+                <div class="connect-links">
+                    <a href="mailto:info.anandvardhan@gmail.com"><span>Email:</span> info.anandvardhan@gmail.com</a>
+                    <a href="https://github.com/avsingh72" target="_blank"><span>GitHub:</span> github.com/avsingh72</a>
+                    <a href="https://www.linkedin.com/in/avsingh0072" target="_blank"><span>LinkedIn:</span> linkedin.com/in/avsingh0072</a>
+                    <a href="https://discord.com/users/1415784246450323556" target="_blank"><span>Discord:</span> Connect on Discord</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- 0. Typing Animation Logic ---
+        const fullName = "Anand Vardhan Singh";
+        const typedNameElement = document.getElementById("typed-name");
+        let charIndex = 0;
+        let typingTimeout = null;
+
+        function typeWriter() {
+            if (charIndex < fullName.length) {
+                typedNameElement.textContent += fullName.charAt(charIndex);
+                charIndex++;
+                typingTimeout = setTimeout(typeWriter, 180); 
+            }
+        }
+
+        function resetAndTypeWriter() {
+            clearTimeout(typingTimeout);
+            typedNameElement.textContent = "";
+            charIndex = 0;
+            setTimeout(typeWriter, 500);
+        }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            typeWriter();
+        });
+
+        // --- 1. Horizontal Sliding Switch Tab Logic ---
+        function switchTab(index, tabId, btnElement) {
+            const container = document.getElementById('page-container');
+            // Shift container by 20% increments (5 sections total)
+            container.style.transform = `translateX(-${index * 20}%)`;
+
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+
+            if (tabId === 'home') {
+                resetAndTypeWriter();
+            }
+        }
+
+        // --- 2. Custom Cursor Logic ---
+        const cursorRing = document.getElementById('cursor-ring');
+        const cursorDot = document.getElementById('cursor-dot');
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        let ringX = mouseX, ringY = mouseY;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursorDot.style.left = mouseX + 'px';
+            cursorDot.style.top = mouseY + 'px';
+        });
+
+        function animateCursor() {
+            ringX += (mouseX - ringX) * 0.15;
+            ringY += (mouseY - ringY) * 0.15;
+            cursorRing.style.left = ringX + 'px';
+            cursorRing.style.top = ringY + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        document.querySelectorAll('button, a, .cert-card').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorRing.style.width = '55px';
+                cursorRing.style.height = '55px';
+                cursorRing.style.backgroundColor = 'rgba(0, 240, 255, 0.1)';
+            });
+            el.addEventListener('mouseleave', () => {
+                cursorRing.style.width = '36px';
+                cursorRing.style.height = '36px';
+                cursorRing.style.backgroundColor = 'transparent';
+            });
+        });
+
+        // --- 3. Three.js Scene Setup (DATA WAVE) ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.set(0, 800, 1500); 
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const SEPARATION = 80, AMOUNTX = 60, AMOUNTY = 60;
+        let count = 0;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(AMOUNTX * AMOUNTY * 3);
+        const scales = new Float32Array(AMOUNTX * AMOUNTY);
+
+        let i = 0, j = 0;
+        for (let ix = 0; ix < AMOUNTX; ix++) {
+            for (let iy = 0; iy < AMOUNTY; iy++) {
+                positions[i] = ix * SEPARATION - ((AMOUNTX * SEPARATION) / 2);
+                positions[i + 1] = 0;
+                positions[i + 2] = iy * SEPARATION - ((AMOUNTY * SEPARATION) / 2);
+                scales[j] = 1;
+                i += 3; j++;
+            }
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                color: { value: new THREE.Color(0x00F0FF) },
+            },
+            vertexShader: `
+                attribute float scale;
+                void main() {
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = scale * (250.0 / -mvPosition.z);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 color;
+                void main() {
+                    if (length(gl_PointCoord - vec2(0.5, 0.5)) > 0.475) discard;
+                    gl_FragColor = vec4(color, 0.6);
+                }
+            `,
+            transparent: true
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        let mouseX3D = 0, mouseY3D = 0;
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX3D = event.clientX - windowHalfX;
+            mouseY3D = event.clientY - windowHalfY;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            camera.position.x += (mouseX3D * 1.5 - camera.position.x) * 0.02;
+            camera.position.y += (-mouseY3D * 1.5 + 800 - camera.position.y) * 0.02;
+            camera.lookAt(scene.position);
+
+            const positions = particles.geometry.attributes.position.array;
+            const scales = particles.geometry.attributes.scale.array;
+            
+            let i = 0, j = 0;
+            for (let ix = 0; ix < AMOUNTX; ix++) {
+                for (let iy = 0; iy < AMOUNTY; iy++) {
+                    positions[i + 1] = (Math.sin((ix + count) * 0.3) * 50) + (Math.sin((iy + count) * 0.5) * 50);
+                    scales[j] = (Math.sin((ix + count) * 0.3) + 1) * 8 + (Math.sin((iy + count) * 0.5) + 1) * 8;
+                    i += 3; j++;
+                }
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+            particles.geometry.attributes.scale.needsUpdate = true;
+            
+            count += 0.05;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
