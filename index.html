@@ -33,6 +33,7 @@
             --border-color: #243047;
             --border-hover: #3b82f666;
             --success: #10B981;
+            --error: #EF4444;
             
             --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
@@ -150,6 +151,12 @@
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .btn-outline {
@@ -744,6 +751,13 @@
             background: rgba(16, 185, 129, 0.1);
             border: 1px solid var(--success);
             color: var(--success);
+        }
+
+        .form-status.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
         }
 
         /* Modal / In-browser PDF Preview */
@@ -1348,30 +1362,28 @@
                         </div>
                     </div>
 
-                    <form class="contact-form" id="contactForm">
+                    <form class="contact-form" id="contactForm" action="https://formspree.io/f/YOUR_FORMSPREE_ID" method="POST">
                         <div class="form-group">
                             <label class="form-label" for="name">Your Name</label>
-                            <input type="text" id="name" class="form-control" placeholder="Jane Doe" required>
+                            <input type="text" id="name" name="name" class="form-control" placeholder="Jane Doe" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="email">Your Email</label>
-                            <input type="email" id="email" class="form-control" placeholder="jane@example.com" required>
+                            <input type="email" id="email" name="_replyto" class="form-control" placeholder="jane@example.com" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="subject">Subject</label>
-                            <input type="text" id="subject" class="form-control" placeholder="Inquiry" required>
+                            <input type="text" id="subject" name="subject" class="form-control" placeholder="Inquiry" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="message">Message</label>
-                            <textarea id="message" class="form-control" placeholder="Write your message here..." required></textarea>
+                            <textarea id="message" name="message" class="form-control" placeholder="Write your message here..." required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <button type="submit" id="submitBtn" class="btn btn-primary" style="width: 100%;">
                             Send Message
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                         </button>
-                        <div class="form-status" id="formStatus">
-                            Thank you! Your message has been sent successfully.
-                        </div>
+                        <div class="form-status" id="formStatus"></div>
                     </form>
                 </div>
             </div>
@@ -1514,17 +1526,48 @@
             }
         });
 
-        // Form submission handler
+        // Contact Form Submission (Asynchronous Dispatch via Fetch API)
         const contactForm = document.getElementById('contactForm');
         const formStatus = document.getElementById('formStatus');
+        const submitBtn = document.getElementById('submitBtn');
 
-        contactForm.addEventListener('submit', (e) => {
+        contactForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-            formStatus.classList.add('success');
-            contactForm.reset();
-            setTimeout(() => {
-                formStatus.classList.remove('success');
-            }, 5000);
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Sending...';
+
+            const formData = new FormData(contactForm);
+
+            try {
+                const response = await fetch(contactForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    formStatus.className = 'form-status success';
+                    formStatus.innerText = 'Thank you! Your message has been sent successfully.';
+                    contactForm.reset();
+                } else {
+                    const data = await response.json();
+                    formStatus.className = 'form-status error';
+                    formStatus.innerText = data.errors ? data.errors.map(err => err.message).join(', ') : 'Oops! There was a problem submitting your message.';
+                }
+            } catch (error) {
+                formStatus.className = 'form-status error';
+                formStatus.innerText = 'Connection error. Please try again later or email directly.';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `Send Message <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
+                setTimeout(() => {
+                    formStatus.className = 'form-status';
+                    formStatus.style.display = 'none';
+                }, 6000);
+            }
         });
     </script>
 </body>
